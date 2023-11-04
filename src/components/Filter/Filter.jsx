@@ -2,8 +2,7 @@ import { Input } from './Filter.styled';
 
 export const Filter = ({ filter, filterInfo, onChange }) => {
   const handleChange = e => {
-    const { name, value } = e.target;
-    onChange(name, value);
+    onChange(e.target.value);
   };
 
   return (

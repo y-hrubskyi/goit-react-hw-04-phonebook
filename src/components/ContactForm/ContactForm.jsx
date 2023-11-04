@@ -1,48 +1,62 @@
-import { Formik } from 'formik';
-import { object, string } from 'yup';
-
-import {
-  StyledForm,
-  Button,
-  Input,
-  Label,
-  StyledErrorMessage,
-} from './ContactForm.styled';
-
-const initialValues = { name: '', number: '' };
-
-const nameRegex =
-  /^[a-zA-Zа-яА-Я]+(([' \\-][a-zA-Zа-яА-Я ])?[a-zA-Zа-яА-Я]*)*$/;
-const numberRegex =
-  /\+?\d{1,4}?[ .\-\s]?\(?\d{1,3}?\)?[ .\-\s]?\d{1,4}[ .\-\s]?\d{1,4}[ .\-\s]?\d{1,9}/;
-const schema = object({
-  name: string().matches(nameRegex).required(),
-  number: string().matches(numberRegex).required(),
-});
+import { useState } from 'react';
+import { Button, Form, Input, Label } from './ContactForm.styled';
 
 export const ContactForm = ({ onSubmit }) => {
-  const handleSubmit = (values, actions) => {
-    const isAlreadyAdded = onSubmit(values);
-    if (!isAlreadyAdded) actions.resetForm();
+  const [name, setName] = useState('');
+  const [number, setNumber] = useState('');
+
+  const handleChange = e => {
+    const { name, value } = e.target;
+
+    switch (name) {
+      case 'name':
+        setName(value);
+        break;
+      case 'number':
+        setNumber(value);
+        break;
+      default:
+        throw new Error('Unsupported form field');
+    }
+  };
+
+  const handleSubmit = e => {
+    e.preventDefault();
+
+    const isAlreadyAdded = onSubmit({ name, number });
+    if (!isAlreadyAdded) reset();
+  };
+
+  const reset = () => {
+    setName('');
+    setNumber('');
   };
 
   return (
-    <Formik
-      initialValues={initialValues}
-      onSubmit={handleSubmit}
-      validationSchema={schema}
-    >
-      <StyledForm>
+    <>
+      <Form onSubmit={handleSubmit}>
         <Label htmlFor="name">Name</Label>
-        <Input type="text" id="name" name="name" />
-        <StyledErrorMessage component="span" name="name" />
+        <Input
+          type="text"
+          id="name"
+          name="name"
+          value={name}
+          onChange={handleChange}
+          required
+        />
 
         <Label htmlFor="number">Number</Label>
-        <Input type="tel" id="number" name="number" />
-        <StyledErrorMessage component="p" name="number" />
+        <Input
+          type="tel"
+          id="number"
+          name="number"
+          value={number}
+          onChange={handleChange}
+          required
+        />
 
         <Button type="submit">Add contact</Button>
-      </StyledForm>
-    </Formik>
+      </Form>
+    </>
   );
 };
