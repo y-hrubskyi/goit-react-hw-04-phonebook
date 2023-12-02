@@ -1,62 +1,39 @@
-import { useState } from 'react';
-import { Button, Form, Input, Label } from './ContactForm.styled';
+import { Formik } from 'formik';
+import * as Yup from 'yup';
 
-export const ContactForm = ({ onSubmit }) => {
-  const [name, setName] = useState('');
-  const [number, setNumber] = useState('');
+import { Form, Label, Field, Button, ErrorMessage } from './ContactForm.styled';
 
-  const handleChange = e => {
-    const { name, value } = e.target;
+const contactsSchema = Yup.object().shape({
+  name: Yup.string().min(2, 'Too Short').required('Required'),
+  number: Yup.string().min(7, 'Must be 7 or more').required('Required'),
+});
 
-    switch (name) {
-      case 'name':
-        setName(value);
-        break;
-      case 'number':
-        setNumber(value);
-        break;
-      default:
-        throw new Error('Unsupported form field');
-    }
-  };
-
-  const handleSubmit = e => {
-    e.preventDefault();
-
-    const isAlreadyAdded = onSubmit({ name, number });
-    if (!isAlreadyAdded) reset();
-  };
-
-  const reset = () => {
-    setName('');
-    setNumber('');
-  };
-
+export const ContactForm = ({
+  contact: { name, number },
+  onSubmit,
+  action,
+}) => {
   return (
-    <>
-      <Form onSubmit={handleSubmit}>
-        <Label htmlFor="name">Name</Label>
-        <Input
-          type="text"
-          id="name"
-          name="name"
-          value={name}
-          onChange={handleChange}
-          required
-        />
+    <Formik
+      initialValues={{ name, number }}
+      onSubmit={onSubmit}
+      validationSchema={contactsSchema}
+    >
+      <Form>
+        <Label>
+          Name
+          <Field type="text" name="name" />
+          <ErrorMessage name="name" component="span" />
+        </Label>
 
-        <Label htmlFor="number">Number</Label>
-        <Input
-          type="tel"
-          id="number"
-          name="number"
-          value={number}
-          onChange={handleChange}
-          required
-        />
+        <Label>
+          Number
+          <Field type="tel" name="number" />
+          <ErrorMessage name="number" component="span" />
+        </Label>
 
-        <Button type="submit">Add contact</Button>
+        <Button type="submit">{action}</Button>
       </Form>
-    </>
+    </Formik>
   );
 };

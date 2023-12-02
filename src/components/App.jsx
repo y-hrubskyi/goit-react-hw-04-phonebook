@@ -1,43 +1,58 @@
 import { useEffect, useState } from 'react';
 import { nanoid } from 'nanoid';
+import toast, { Toaster } from 'react-hot-toast';
 
-import { ContactForm } from './ContactForm/ContactForm';
+import { ContactAdd } from './ContactAdd/ContactAdd';
 import { Filter } from './Filter/Filter';
 import { ContactList } from './ContactList/ContactList';
-import { getContactsFromLS, setContactsToLS } from 'services/localStorage';
 
 import { GlobalStyle } from './GlobalStyle';
-import { AppWrapper } from './App.styled';
+import { Layout, PageTitle, Title } from './App.styled';
+
+import { getInitialContacts, saveContacts } from 'services/localStorage';
 
 export const App = () => {
+  const [contacts, setContacts] = useState(getInitialContacts);
   const [filter, setFilter] = useState('');
-  const [contacts, setContacts] = useState(getContactsFromLS);
 
   useEffect(() => {
-    setContactsToLS(contacts);
+    saveContacts(contacts);
   }, [contacts]);
 
   const updateFilter = value => {
     setFilter(value);
   };
 
-  const addContact = data => {
-    const formattedName = data.name.toLowerCase();
-    const isAlreadyAdded = contacts.some(
+  const addContact = contact => {
+    const formattedName = contact.name.toLowerCase();
+    const isExist = contacts.some(
       ({ name }) => name.toLowerCase() === formattedName
     );
 
-    if (isAlreadyAdded) {
-      alert(`${data.name} is already in contacts.`);
-      return isAlreadyAdded;
+    if (isExist) {
+      toast.error(`${contact.name} is already in contacts.`);
+      return isExist;
     }
 
-    const newContact = { ...data, id: nanoid() };
+    const newContact = { ...contact, id: nanoid() };
     setContacts(prevState => [...prevState, newContact]);
+    toast.success('Contact successfully added');
   };
 
-  const deleteContact = id => {
-    setContacts(prevState => prevState.filter(contact => contact.id !== id));
+  const updateContact = newContact => {
+    setContacts(prevState =>
+      prevState.map(contact =>
+        contact.id === newContact.id ? newContact : contact
+      )
+    );
+    toast.success('Contact successfully updated');
+  };
+
+  const deleteContact = contactId => {
+    setContacts(prevState =>
+      prevState.filter(contact => contact.id !== contactId)
+    );
+    toast.success('Contact successfully deleted');
   };
 
   const filterContacts = () => {
@@ -49,22 +64,32 @@ export const App = () => {
   };
 
   const filteredContacts = filterContacts();
-
   const results = filteredContacts.length;
+
   let filterInfo = '';
   if (!results && !filter) filterInfo = <p>Your contact list is empty</p>;
   if (!results && filter) filterInfo = <p>Not Finded</p>;
 
   return (
-    <AppWrapper>
+    <Layout>
       <GlobalStyle />
+      <Toaster toastOptions={{ duration: 1500 }} />
 
-      <h1>Phonebook</h1>
-      <ContactForm onSubmit={addContact} />
-
-      <h2>Contacts</h2>
-      <Filter filter={filter} filterInfo={filterInfo} onChange={updateFilter} />
-      <ContactList contacts={filteredContacts} onClick={deleteContact} />
-    </AppWrapper>
+      <PageTitle>Phonebook</PageTitle>
+      <Title>Contacts</Title>
+      {contacts.length > 0 && (
+        <Filter filter={filter} onUpdate={updateFilter} />
+      )}
+      {filteredContacts.length ? (
+        <ContactList
+          contacts={filteredContacts}
+          onUpdate={updateContact}
+          onDelete={deleteContact}
+        />
+      ) : (
+        filterInfo
+      )}
+      <ContactAdd onAdd={addContact} />
+    </Layout>
   );
 };
